@@ -7,8 +7,83 @@ const BONUS_POINTS_PER_FROG = 50;
 const INITIAL_POINTS_PER_FROG = 10;
 const SPEED_MULTIPLIER = 1.5; // Factor to increase speed (decrease interval)
 
-// --- Class Definitions ---
+// --- Function to Inject CSS ---
+function injectCSS() {
+    const cssStyles = `
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #222;
+            margin: 0;
+            font-family: sans-serif;
+            overflow: hidden; /* Prevent scrollbars if game board is large */
+        }
+        #game-container {
+            text-align: center;
+        }
+        #game-board {
+            display: grid;
+            border: 5px solid #fff;
+            background-color: #000;
+            margin-bottom: 20px;
+            box-sizing: content-box; /* Ensure border adds to size, not shrinks content */
+        }
+        .game-cell {
+            /* width and height will be set by JavaScript by the Board class */
+        }
+        .snake {
+            background-color: #0f0; /* Green for the snake */
+        }
+        .frog {
+            background-color: #f00; /* Red for the frog */
+            border-radius: 50%; /* Make the frog round */
+        }
+        #score {
+            color: #fff;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        #game-over {
+            color: #fff;
+            font-size: 2em;
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+        }
+    `;
+    const styleElement = document.createElement('style');
+    styleElement.type = 'text/css';
+    styleElement.innerHTML = cssStyles;
+    document.head.appendChild(styleElement);
+}
 
+// --- Function to Create HTML Structure ---
+function createHTMLStructure() {
+    const gameContainer = document.createElement('div');
+    gameContainer.id = 'game-container';
+
+    const scoreDisplay = document.createElement('div');
+    scoreDisplay.id = 'score';
+    scoreDisplay.textContent = 'Score: 0'; // Initial text
+
+    const gameBoard = document.createElement('div');
+    gameBoard.id = 'game-board';
+
+    const gameOverDisplay = document.createElement('div');
+    gameOverDisplay.id = 'game-over';
+    gameOverDisplay.textContent = 'Game Over! Press any arrow key to restart.';
+    gameOverDisplay.style.display = 'none'; // Set initial display style
+
+    gameContainer.appendChild(scoreDisplay);
+    gameContainer.appendChild(gameBoard);
+    gameContainer.appendChild(gameOverDisplay);
+
+    document.body.appendChild(gameContainer);
+}
+
+// --- Class Definitions (Board, Snake, Frog, UIManager, Game) ---
+// (Your existing class definitions go here, unchanged)
 class Board {
     constructor(gridSize, cellSize, boardElementId) {
         this.gridSize = gridSize;
@@ -17,7 +92,6 @@ class Board {
 
         if (!this.boardElement) {
             console.error(`Board element with ID '${boardElementId}' not found.`);
-            // Potentially throw an error or handle this case to prevent further issues
             return;
         }
         this.setupBoard();
@@ -38,7 +112,6 @@ class Board {
         const element = document.createElement('div');
         element.style.gridColumnStart = position.x + 1;
         element.style.gridRowStart = position.y + 1;
-        // Ensure game cells have a defined size, even if not in CSS for .game-cell
         element.style.width = `${this.cellSize}px`;
         element.style.height = `${this.cellSize}px`;
         element.classList.add('game-cell', className);
@@ -57,26 +130,24 @@ class Snake {
     reset() {
         this.body = [{ ...this.initialPosition }];
         this.direction = { ...this.initialDirection };
-        this.changingDirection = false; // Prevents multiple direction changes in one game tick
+        this.changingDirection = false;
     }
 
     move() {
-        this.changingDirection = false; // Reset for the next game tick
+        this.changingDirection = false;
         const head = { x: this.body[0].x + this.direction.x, y: this.body[0].y + this.direction.y };
-        this.body.unshift(head); // Add new head
+        this.body.unshift(head);
     }
 
     grow() {
-        // Growth happens by not removing the tail segment.
-        // The new head segment is already added by the move() method.
+        // Growth is handled by not calling shrink()
     }
 
     shrink() {
-        this.body.pop(); // Remove tail segment
+        this.body.pop();
     }
 
     changeDirection(newDirectionKeyCode, isGameOver) {
-        // Do not change direction if game is over or if a change has already been registered for the current tick
         if ((this.changingDirection && !isGameOver)) return false;
 
         const LEFT_ARROW = 37;
@@ -107,7 +178,7 @@ class Snake {
         if (attemptedChange && !isGameOver) {
             this.changingDirection = true;
         }
-        return attemptedChange; // Indicates if a valid direction change was made
+        return attemptedChange;
     }
 
     getHead() {
@@ -137,7 +208,7 @@ class Snake {
 class Frog {
     constructor(gridSize) {
         this.gridSize = gridSize;
-        this.position = { x: 0, y: 0 }; // Initial dummy position
+        this.position = { x: 0, y: 0 };
     }
 
     generatePosition(snakeBody) {
@@ -146,7 +217,6 @@ class Frog {
                 x: Math.floor(Math.random() * this.gridSize),
                 y: Math.floor(Math.random() * this.gridSize)
             };
-
             let collisionWithSnake = false;
             for (let i = 0; i < snakeBody.length; i++) {
                 if (this.position.x === snakeBody[i].x && this.position.y === snakeBody[i].y) {
@@ -155,7 +225,7 @@ class Frog {
                 }
             }
             if (!collisionWithSnake) {
-                break; // Found a valid spot
+                break;
             }
         }
     }
@@ -196,18 +266,23 @@ class Game {
         this.gridSize = gridSize;
         this.cellSize = cellSize;
 
-        // Wait for the DOM to be fully loaded before initializing components that interact with it.
+        // The DOMContentLoaded listener here will now execute after the main script
+        // has already set up the HTML structure and CSS.
         document.addEventListener('DOMContentLoaded', () => {
+            // It's important that injectCSS() and createHTMLStructure() from the main script
+            // have already run by the time this DOMContentLoaded callback fires.
+            // Or, if they are also inside a DOMContentLoaded, ensure proper sequencing.
+            // For simplicity with this new structure, we'll call them *before* new Game().
+
             this.board = new Board(gridSize, cellSize, 'game-board');
-            // Ensure board was successfully initialized
             if (!this.board.boardElement) {
-                 console.error("Game cannot start: Board element could not be initialized.");
+                 console.error("Game cannot start: Board element could not be initialized by Game class.");
                  return;
             }
 
             this.snake = new Snake(
-                { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) }, // Initial position (center)
-                { x: 0, y: -1 }, // Initial direction (up)
+                { x: Math.floor(gridSize / 2), y: Math.floor(gridSize / 2) },
+                { x: 0, y: -1 },
                 gridSize
             );
             this.frog = new Frog(gridSize);
@@ -228,12 +303,10 @@ class Game {
     handleInput(event) {
         const keyPressed = event.keyCode;
         if (this.isGameOver) {
-            // Allow restart on arrow key press if game is over
-            if (keyPressed >= 37 && keyPressed <= 40) { // Arrow keys
+            if (keyPressed >= 37 && keyPressed <= 40) {
                 this.restartGame();
             }
         } else {
-            // Pass game over state to prevent direction change locking during game over
             this.snake.changeDirection(keyPressed, this.isGameOver);
         }
     }
@@ -243,7 +316,7 @@ class Game {
         this.uiManager.hideGameOver();
         this.score = 0;
         this.uiManager.updateScore(this.score);
-        this.snake.reset(); // Reset snake to its initial state
+        this.snake.reset();
         this.currentGameSpeed = INITIAL_GAME_SPEED;
         this.pointsPerFrog = INITIAL_POINTS_PER_FROG;
         this.speedIncreased = false;
@@ -251,28 +324,25 @@ class Game {
         this.frog.generatePosition(this.snake.getBody());
         this.draw();
 
-        clearInterval(this.gameInterval); // Clear any existing game loop
+        clearInterval(this.gameInterval);
         this.gameInterval = setInterval(() => this.gameLoop(), this.currentGameSpeed);
     }
 
     gameLoop() {
         if (this.isGameOver) return;
-
         this.snake.move();
-
         if (this.checkFrogEaten()) {
             this.score += this.pointsPerFrog;
             this.uiManager.updateScore(this.score);
-            this.snake.grow(); // Signal that snake should grow (achieved by not shrinking)
+            this.snake.grow();
             this.frog.generatePosition(this.snake.getBody());
             this.checkAndApplyBonus();
         } else {
-            this.snake.shrink(); // Remove tail if no frog was eaten
+            this.snake.shrink();
         }
-
         if (this.checkCollisions()) {
             this.endGame();
-        } else if (!this.isGameOver) { // Only redraw if the game is still active
+        } else if (!this.isGameOver) {
             this.draw();
         }
     }
@@ -286,31 +356,27 @@ class Game {
     checkAndApplyBonus() {
         if (this.score >= SCORE_THRESHOLD && !this.speedIncreased) {
             this.pointsPerFrog = BONUS_POINTS_PER_FROG;
-            // Calculate new speed: interval decreases, so divide by multiplier. Ensure a minimum speed.
-            this.currentGameSpeed = Math.max(50, INITIAL_GAME_SPEED / SPEED_MULTIPLIER); // e.g., 50ms is a fast update
+            this.currentGameSpeed = Math.max(50, INITIAL_GAME_SPEED / SPEED_MULTIPLIER);
             this.speedIncreased = true;
-
-            clearInterval(this.gameInterval); // Clear old interval
-            this.gameInterval = setInterval(() => this.gameLoop(), this.currentGameSpeed); // Start new interval with new speed
+            clearInterval(this.gameInterval);
+            this.gameInterval = setInterval(() => this.gameLoop(), this.currentGameSpeed);
             console.log(`Speed increased to ${this.currentGameSpeed}ms interval. Points per frog: ${this.pointsPerFrog}.`);
         }
     }
 
     checkCollisions() {
-        // Check for wall collision or self-collision
-        if (this.snake.checkWallCollision() || this.snake.checkSelfCollision()) {
-            return true;
-        }
-        return false;
+        return this.snake.checkWallCollision() || this.snake.checkSelfCollision();
     }
 
     draw() {
+        if (!this.board || !this.board.boardElement) {
+            // console.warn("Board not ready for drawing."); // Or handle more gracefully
+            return;
+        }
         this.board.clear();
-        // Draw Snake
         this.snake.getBody().forEach(segment => {
             this.board.drawElement(segment, 'snake');
         });
-        // Draw Frog
         this.board.drawElement(this.frog.getPosition(), 'frog');
     }
 
@@ -321,12 +387,28 @@ class Game {
     }
 
     restartGame() {
-        // Optional: Add a small delay before restarting to prevent accidental immediate restarts
-        // setTimeout(() => this.startGame(), 100);
         this.startGame();
     }
 }
 
-// --- Game Initialization ---
-// The Game constructor now uses DOMContentLoaded, so we can instantiate it directly.
-const snakeGame = new Game(GRID_SIZE, CELL_SIZE);
+// --- Main Execution Logic ---
+// This self-invoking function ensures that the CSS and HTML structure are set up
+// when the DOM is ready, and then it initializes the game.
+(function() {
+    function setupAndStartGame() {
+        injectCSS();
+        createHTMLStructure();
+        // Now that HTML structure and CSS are injected, instantiate the Game.
+        // The Game class's constructor has its own DOMContentLoaded listener,
+        // which will fire and find the elements created by createHTMLStructure.
+        const snakeGame = new Game(GRID_SIZE, CELL_SIZE);
+    }
+
+    if (document.readyState === 'loading') {
+        // Still loading, wait for DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', setupAndStartGame);
+    } else {
+        // DOM is already loaded, execute immediately
+        setupAndStartGame();
+    }
+})();
