@@ -4,68 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
-    <style>
-        /* You can copy the CSS styles from your original DEMO.html here,
-           or if you create a style.css, link it: <link rel="stylesheet" href="style.css"> */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #222;
-            margin: 0;
-            font-family: sans-serif;
-            overflow: hidden; /* Prevent scrollbars if game board is large */
-        }
-
-        #game-container {
-            text-align: center;
-        }
-
-        #game-board {
-            display: grid;
-            /* grid-template-columns and grid-template-rows will be set by JavaScript */
-            border: 5px solid #fff;
-            background-color: #000;
-            margin-bottom: 20px;
-            box-sizing: content-box; /* Ensure border adds to size, not shrinks content */
-        }
-
-        .game-cell {
-            /* width and height will be set by JavaScript based on board size and CELL_SIZE */
-        }
-
-        .snake {
-            background-color: #0f0; /* Green for the snake */
-        }
-
-        .frog {
-            background-color: #f00; /* Red for the frog */
-            border-radius: 50%; /* Make the frog round */
-        }
-
-        #score {
-            color: #fff;
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-
-        #game-over {
-            color: #fff;
-            font-size: 2em;
-            display: none; /* Hidden by default */
-            margin-top: 20px;
-        }
-    </style>
-</head>
+    </head>
 <body>
-    <div id="game-container">
-        <div id="score">Score: 0</div>
-        <div id="game-board">
-            </div>
-        <div id="game-over">Game Over! Press any arrow key to restart.</div>
-    </div>
-
     <script src="Snake_game.js"></script>
 </body>
 </html>
