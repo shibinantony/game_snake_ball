@@ -1,0 +1,11 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "Snake Game - static site",
+  "main": "Snake_game.js",
+  "scripts": {
+    "start": "echo \"No build needed for static site\""
+  },
+  "author": "",
+  "license": "ISC"
+}
